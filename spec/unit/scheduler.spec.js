@@ -57,23 +57,26 @@ describe("MatrixScheduler", function() {
         };
         const deferA = Promise.defer();
         const deferB = Promise.defer();
-        let resolvedA = false;
+        let yieldedA = false;
         scheduler.setProcessFunction(function(event) {
-            if (resolvedA) {
+            if (yieldedA) {
                 expect(event).toEqual(eventB);
                 return deferB.promise;
             } else {
+                yieldedA = true;
                 expect(event).toEqual(eventA);
                 return deferA.promise;
             }
         });
-        scheduler.queueEvent(eventA);
-        const promiseB = scheduler.queueEvent(eventB);
-        deferA.resolve({});
-        resolvedA = true;
-        deferB.resolve({});
-        await promiseB;
-        expect(resolvedA).toBe(true);
+        const abPromise = Promise.all([
+            scheduler.queueEvent(eventA),
+            scheduler.queueEvent(eventB),
+        ]);
+        deferB.resolve({b: true});
+        deferA.resolve({a: true});
+        const [a, b] = await abPromise;
+        expect(a.a).toEqual(true);
+        expect(b.b).toEqual(true);
     });
 
     it("should invoke the retryFn on failure and wait the amount of time specified",
