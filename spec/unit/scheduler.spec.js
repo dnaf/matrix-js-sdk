@@ -48,7 +48,7 @@ describe("MatrixScheduler", function() {
         clock.uninstall();
     });
 
-    it("should process events in a queue in a FIFO manner", function(done) {
+    it("should process events in a queue in a FIFO manner", async function() {
         retryFn = function() {
             return 0;
         };
@@ -68,13 +68,12 @@ describe("MatrixScheduler", function() {
             }
         });
         scheduler.queueEvent(eventA);
-        scheduler.queueEvent(eventB).done(function() {
-            expect(resolvedA).toBe(true);
-            done();
-        });
+        const promiseB = scheduler.queueEvent(eventB);
         deferA.resolve({});
         resolvedA = true;
         deferB.resolve({});
+        await promiseB;
+        expect(resolvedA).toBe(true);
     });
 
     it("should invoke the retryFn on failure and wait the amount of time specified",
