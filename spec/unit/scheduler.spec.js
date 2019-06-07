@@ -19,10 +19,10 @@ describe("MatrixScheduler", function() {
     let defer;
     const roomId = "!foo:bar";
     const eventA = utils.mkMessage({
-        user: "@alice:bar", room: roomId, event: true,
+        user: "@alice:bar", room: roomId, event: true, getRelatedId: () => null,
     });
     const eventB = utils.mkMessage({
-        user: "@alice:bar", room: roomId, event: true,
+        user: "@alice:bar", room: roomId, event: true, getRelatedId: () => null,
     });
 
     beforeEach(function() {
@@ -103,13 +103,16 @@ describe("MatrixScheduler", function() {
         });
 
         scheduler.queueEvent(eventA);
-        expect(procCount).toEqual(1);
-        defer.reject({});
-        retryDefer.promise.done(function() {
+
+        Promise.resolve().then(() => {
             expect(procCount).toEqual(1);
-            clock.tick(waitTimeMs);
-            expect(procCount).toEqual(2);
-            done();
+            defer.reject({});
+            retryDefer.promise.done(function() {
+                expect(procCount).toEqual(1);
+                clock.tick(waitTimeMs + 1);
+                expect(procCount).toEqual(2);
+                done();
+            });
         });
     });
 
@@ -122,8 +125,8 @@ describe("MatrixScheduler", function() {
             return -1;
         };
         queueFn = function() {
- return "yep";
-};
+            return "yep";
+        };
 
         const deferA = Promise.defer();
         const deferB = Promise.defer();
@@ -143,11 +146,13 @@ describe("MatrixScheduler", function() {
         const globalA = scheduler.queueEvent(eventA);
         scheduler.queueEvent(eventB);
 
-        expect(procCount).toEqual(1);
-        deferA.reject({});
-        globalA.catch(function() {
-            expect(procCount).toEqual(2);
-            done();
+        Promise.resolve().then(() => {
+            expect(procCount).toEqual(1);
+            deferA.reject({});
+            globalA.catch(function() {
+                expect(procCount).toEqual(2);
+                done();
+            });
         });
     });
 
@@ -300,7 +305,9 @@ describe("MatrixScheduler", function() {
                 expect(ev).toEqual(eventA);
                 return defer.promise;
             });
-            expect(procCount).toEqual(1);
+            Promise.resolve().then(() => {
+                expect(procCount).toEqual(1);
+            });
         });
 
         it("should not call the processFn if there are no queued events", function() {
