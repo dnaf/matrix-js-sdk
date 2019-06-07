@@ -78,7 +78,7 @@ describe("MatrixScheduler", function() {
     });
 
     it("should invoke the retryFn on failure and wait the amount of time specified",
-    async function(done) {
+    async function() {
         const waitTimeMs = 1500;
         const retryDefer = Promise.defer();
         retryFn = function() {
@@ -112,7 +112,6 @@ describe("MatrixScheduler", function() {
         clock.tick(waitTimeMs);
         await Promise.resolve();
         expect(procCount).toEqual(2);
-        done();
     });
 
     it("should give up if the retryFn on failure returns -1 and try the next event",
