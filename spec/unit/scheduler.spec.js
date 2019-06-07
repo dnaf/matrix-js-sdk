@@ -19,10 +19,10 @@ describe("MatrixScheduler", function() {
     let defer;
     const roomId = "!foo:bar";
     const eventA = utils.mkMessage({
-        user: "@alice:bar", room: roomId, event: true, getRelatedId: () => null,
+        user: "@alice:bar", room: roomId, event: true,
     });
     const eventB = utils.mkMessage({
-        user: "@alice:bar", room: roomId, event: true, getRelatedId: () => null,
+        user: "@alice:bar", room: roomId, event: true,
     });
 
     beforeEach(function() {
@@ -115,7 +115,7 @@ describe("MatrixScheduler", function() {
     });
 
     it("should give up if the retryFn on failure returns -1 and try the next event",
-    function(done) {
+    async function() {
         // Queue A & B.
         // Reject A and return -1 on retry.
         // Expect B to be tried next and the promise for A to be rejected.
@@ -144,14 +144,15 @@ describe("MatrixScheduler", function() {
         const globalA = scheduler.queueEvent(eventA);
         scheduler.queueEvent(eventB);
 
-        Promise.resolve().then(() => {
-            expect(procCount).toEqual(1);
-            deferA.reject({});
-            globalA.catch(function() {
-                expect(procCount).toEqual(2);
-                done();
-            });
-        });
+        await Promise.resolve();
+        expect(procCount).toEqual(1);
+        deferA.reject({});
+        try {
+            await globalA;
+        } catch(err) {
+            await Promise.resolve();
+            expect(procCount).toEqual(2);
+        }
     });
 
     it("should treat each queue separately", function(done) {
